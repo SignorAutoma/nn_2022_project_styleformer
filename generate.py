@@ -120,13 +120,8 @@ def generate_images(
         img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
         PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/seed{seed:04d}.png')
 
-    """  seed = seeds[0]
-    print('Generating image for seed %d ...' % ())
-    z = torch.from_numpy(np.random.RandomState(seed).randn(1, G.z_dim)).to(device)
-    img = G(z, label, truncation_psi=truncation_psi, noise_mode=noise_mode)
-    img = (img.permute(0, 2, 3, 1) * 127.5 + 128).clamp(0, 255).to(torch.uint8)
-    PIL.Image.fromarray(img[0].cpu().numpy(), 'RGB').save(f'{outdir}/seed{seed:04d}.png') 
-    return img """
+
+
 
 
 
