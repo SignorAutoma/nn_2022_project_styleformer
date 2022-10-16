@@ -1,4 +1,4 @@
-
+<a href="https://colab.research.google.com/drive/1exy4kS-OdsHHA_yY9dzOjQCzAkz--6q6?authuser=4#scrollTo=V5Xado9PNS74" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 # Stylegan2 with Transformer
 
 [Description]
