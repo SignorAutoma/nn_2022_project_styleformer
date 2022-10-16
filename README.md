@@ -106,5 +106,6 @@ The output should be like the image above
 
 [1] **Styleformer: Transformer based Generative Adversarial Networks with Style Vector**  
 Jeeseung Park, Younggeun Kim
+
 [2] **Analyzing and Improving the Image Quality of StyleGAN**  
 Tero Karras, Samuli Laine, Miika Aittala, Janne Hellsten, Jaakko Lehtinen, Timo Aila
