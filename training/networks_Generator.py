@@ -355,7 +355,7 @@ class Encoderlayer(nn.Module):
         
         x = x + self.bias.to(x.dtype)
         x = F.leaky_relu(x, negative_slope=0.2) # Try to use Relu instead? Check https://datascience.stackexchange.com/questions/102483/difference-between-relu-elu-and-leaky-relu-their-pros-and-cons-majorly
-        # x = torch.clamp(x, max=None, min=-None) We are not using clamp since we want to avoid convolution
+        x = torch.clamp(x, max=None, min=-None) 
         return x
 
     def compute_qkv_weights(self, h_dim, memory_format):
