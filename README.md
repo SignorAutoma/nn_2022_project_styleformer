@@ -14,8 +14,17 @@ GAN's methods, and also our implementation of Styleformer (thinked to reduce the
 Google Colab is a free service that is suited to let anybody to write and execute arbitrary python code through the browser, and is especially well suited to machine learning, data analysis and education. Colab fits very well with Stylegan and this is the main reason about our choice to enanche Stylegan experience through it.
 Anyways, in some case it's useful to have a local environment up and running, so we will also see how to setup everything to work with Windows in a wsl environment.
 
-## Data & methodology
-[Dataset + Architecture]
+## Dataset & Architecture
+
+As said at the beginning to actually train with GAN's an high end GPU is needed, more than one actually is better. Due to lack of material resources we could not replicate the same results obtained from **[1]** in a decent amount of time, for completeness and to ensure the validity of the project we are going to present the results obtained with **[1]** compared with our trained model with Colab.
+
+**CIFAR-10:** 
+
+this is widely used as a benchmark dataset. They used 50K images(32x32) at the training set, without using label.
+With the pre-trained pickle Styleformer records FID 2.82, and IS 9.94, which is comparable with current state-of-the-art. 
+With our pickle Styleformer records FID xx.xx, and IS xx.xx.
+
+**[ARCHITECTURE]** *// TODO*
 
 ## Repository Structure
 
