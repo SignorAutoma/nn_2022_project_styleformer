@@ -2,6 +2,7 @@
 
 
 
+
 # Styleformer
 ### Implementation of a style image generator, convolution-free and based on Transformer model.
 <a href="https://colab.research.google.com/drive/1exy4kS-OdsHHA_yY9dzOjQCzAkz--6q6?authuser=4#scrollTo=V5Xado9PNS74" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
@@ -29,12 +30,26 @@ However, Transformer presents also some drawbacks, indeed, for higher dimension 
 
 ![Styleformer architecture](/docs/architecture.png)
 
-Our generator is conditioned on a learnable constant input and combined with a learnable positional encoding (as seen in the Transformer model **[3]**) which is a scheme throguh which the knowledge about the order of a input is mantained.
+Styleformer generator is conditioned on a learnable constant input and combined with a learnable positional encoding (as seen in the Transformer model **[3]**) which is a scheme throguh which the knowledge about the order of a input is mantained.
 The constant input (8x8) is flattened (64) to enter the Transformer-based encoder, then the input passes through the Styleformer encoder. Each resolution passes through several encoder blocks and eventually we proceed with a bilinear upsample operation by reshaping encoder output to the form of square feature map. After upsampling, flatten process is carried out again to match the input form of the Styleformer encoder, followed by adding positional encoding in the form of a learned parameter. This process will repeat until the feature map resolution reaches the target image resolution.
 For each resolution, the number of the Styleformer encoder and hidden dimension size can be chosen as hyperparameters, each for these parameters, can change for each resolution.
 
-Let's see in the details what happend in the encoder blocks
-**[TODO]**
+Let's see in the details what happen in the encoder blocks:
+
+StyleGAN generates an image by receiving different inputs in the form of style vectors, and similar to it, we need different style vector for each module, therefore for each operation, to learn effectively.
+As said before, we need a Transformer-based generator that generates images applying a style vector, for this reason we need a style modulation and demodulation methods, in which we apply style vector to achieve the self-attention operation.
+Attention mechanism can be seen as built in two steps, a *preparation* module in which we compute **Q**uery, **K**ey and **V**alue and a *main module* in which the attention operation is applied.
+
+This implementations, contrarily to the original structure of Transformer, uses a pre-Layer Normalization procedure.  Indeed, the Layer Normalization of the existing Transformer comes after a linear layer that integrates multi-heads which, in our case, could led some disturbs in generating the attention map (style modulation would be applied before entering the prepare module of the next encoder). So, given that the role of layer Normalization in a Transformation is the preparation of generating an attention map, we need to apply normalization before the prepare module of the Attention, solving potential issues with the learning process.
+
+In the *prepare module,* after the normalization, we have the demodulation for Query, Key and Value. Styleformer encoder creates **Q**, **K** and **V** through linear operation to the input feature map scaled with Style Input Vector. After these operations, V will be modulated again but this time with a different vector called *"Style Value"*, thus a demodulation to remove the scaled effect of Style Input is required. This double style injection led us to obtain different style vector for each steps! It's important to mention that we also need a demodulation of Q and K before creating the attention map, since the dot product to create it could become very expansive otherwise. 
+
+After demodulation of Q, K and V, we can find the core of Self-Attention, here we have the production of the attention map and the weighted sum of V with attention map itself *(increased multi-head Self-Attention)*, and then performs linear operation. The Self-Attention mechanism is needed to avoid to use always the same kernel for each section (pixel and channel), indeed otherwise we would have only one huge kernel for each channel, and so diversity in generated image would be decreased.
+As mentioned, the pixel-communication(self-attention) and channel-communication(multi-head integration) in the Transformer encoder is separated. We overcome the problem of using a huge kernel by increasing the number of head of multi-head attention, then the created attention map will be different for each head. 
+
+So a attention map will be created for each head, making channels in each head meet different kernels. But if we increase too much the number of heads, it may cause attention map to not be properly created, resulting in poor performance. So, as demonstrated in the paper **[1]**, the increasing of the number of heads improves performance only when the depth is at least 32.
+
+A further demodulation is needed at this point, since a Encoder output will be input for next one. It's important to notice also that we are using ReLu activation function and we add bias and noise at the end of each encoder block. After passing blocks we reshape it to the form of a square feature map (Unflatten) and we proceed with the cited bilinear unsample. Furthermore, each output in each resolution is converted into a RGB channel with a RGB layer inspired from **[2]** implementation.
 
 ## Dataset & Evaluation
 
@@ -46,8 +61,9 @@ For the metrics to evaluate our implementation we have choosen the **Frechet Inc
 
 this is widely used as a benchmark dataset. They used 50K images(32x32) at the training set, without using label.
 With the pre-trained pickle Styleformer records FID 2.82, and IS 9.94, which is comparable with current state-of-the-art. 
+
 With our implementation after 50 minutes of training with Colab, Styleformer recorded FID 95.49, and IS xx.xx.
-With Styleformer code from [1] after 50 minutes of training with Colab, recorded FID 69.07 and IS xx.xx.
+With Styleformer code from [1] after 50 minutes of training with Colab, recorded FID 69.07 and IS 4.66.
 We are aware that the training in this small amount of time is not a complete information, but is significative to show the goodness of the implementation. 
 Actually we are working to train the network for an higher amount of time and eventually with more hardware resources to have a more accurate estimation of performances.
 
