@@ -79,10 +79,6 @@ Actually we are working to train the network for an higher amount of time and ev
     ├── generate.py                     // Generation function definition
     ├── legacy.py                       // PKL handle utilities
     ├── metrics                         // Folder containing metrics methods
-    ├── pre_trained                     // Pre-trained samples from [1]
-        ├── Pretrained_CIFAR10.pkl
-        ├── Pretrained_CelebA.pkl
-        └── Pretrained_LSUNchurch.pkl
     ├── torch_utils                     // Torch utilities
     ├── train.py                        // Training main methods
     └── training                        // Networks utilities
