@@ -115,17 +115,17 @@ def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight, u_wei
     styleInputVec = styles[:, :hidden_dimension]
     styleValueVec = styles[:, hidden_dimension:]
 
-    # Prenormalization of the layer
+    # Pre-normalization of the layer
     x = x * styleInputVec.to(x.dtype).reshape(batch_size, 1, -1)
     x = layernorm(x) 
 
-    q_dcoefs = demoduleAttribute(q_weight, batch_size, styleInputVec) # TODO CHANGE NAME OF THE METHOD!
+    q_dcoefs = computeAttribute(q_weight, batch_size, styleInputVec)
 
-    k_dcoefs = demoduleAttribute(k_weight, batch_size, styleInputVec)
+    k_dcoefs = computeAttribute(k_weight, batch_size, styleInputVec)
 
-    v_dcoefs = demoduleAttribute(v_weight, batch_size, styleInputVec)
+    v_dcoefs = computeAttribute(v_weight, batch_size, styleInputVec)
 
-    w_dcoefs = demoduleAttribute(w_weight, batch_size, styleInputVec)
+    w_dcoefs = computeAttribute(w_weight, batch_size, styleInputVec)
 
     q_value = torch.matmul(x, q_weight.t().to(x.dtype)) * q_dcoefs.to(x.dtype).reshape(batch_size, 1, -1)
     q_value = q_value.reshape(batch_size, seq_length, num_heads, depth).permute(0, 2, 1, 3)
@@ -136,10 +136,10 @@ def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight, u_wei
     if proj_weight is not None:
         k_value = torch.matmul(k_value.permute(0, 1, 3, 2), proj_weight.t().to(x.dtype)).permute(0, 1, 3, 2)
     
-    v_value = torch.matmul(x, v_weight.t().to(x.dtype))
-    v_value = v_value * v_dcoefs.to(x.dtype).reshape(batch_size, 1, -1)
-
+    # Apply Style Value vector to V to achieve different style vector for each step
+    v_value = torch.matmul(x, v_weight.t().to(x.dtype)) * v_dcoefs.to(x.dtype).reshape(batch_size, 1, -1)
     v_value = v_value * styleValueVec.to(x.dtype).reshape(batch_size, 1, -1)
+
     skip = v_value
     
     if proj_weight is not None:     # Reduce complexity through linformer
@@ -150,11 +150,7 @@ def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight, u_wei
 
     attn_score = computeAttention(attention_scale, q_value, k_value)
 
-    x = torch.matmul(attn_score, v_value).permute(0, 2, 1, 3).reshape(batch_size, seq_length, hidden_dimension)
-
-    x = torch.matmul(x, w_weight.t().to(x.dtype))
-
-    x = x * w_dcoefs.to(x.dtype).reshape(batch_size, 1, -1)
+    x = computeMultiHeadSelfAttention(w_weight, batch_size, seq_length, hidden_dimension, w_dcoefs, v_value, attn_score)
 
     u = u_weight.unsqueeze(0)
     u = u * styleValueVec.reshape(batch_size, 1, -1)
@@ -167,11 +163,19 @@ def modulated_channel_attention(x, q_weight, k_weight, v_weight, w_weight, u_wei
 
     return x
 
+def computeMultiHeadSelfAttention(w_weight, batch_size, seq_length, hidden_dimension, w_dcoefs, v_value, attn_score):
+    x = torch.matmul(attn_score, v_value).permute(0, 2, 1, 3).reshape(batch_size, seq_length, hidden_dimension)
+
+    x = torch.matmul(x, w_weight.t().to(x.dtype))
+
+    x = x * w_dcoefs.to(x.dtype).reshape(batch_size, 1, -1)
+    return x
+
 def computeAttention(attention_scale, q_value, k_value):
     attn = torch.matmul(q_value, k_value.permute(0, 1, 3, 2)) * attention_scale # Attention Map
     return attn.softmax(dim=-1)
 
-def demoduleAttribute(attr_weight, batch_size, styleInputVec): # For both Q, K, V, W
+def computeAttribute(attr_weight, batch_size, styleInputVec): # For both Q, K, V, W
     attr_weight = attr_weight.unsqueeze(0)
     attr_weight = attr_weight * styleInputVec.reshape(batch_size, 1, -1)
     attr_dcoefs = (attr_weight.square().sum(dim=[2]) + 1e-8).rsqrt()
@@ -310,7 +314,7 @@ class Encoderlayer(nn.Module):
                  proj_weight=None, channels_last=False):
         super().__init__()
         self.h_dim = h_dim
-        self.num_heads = max(minimum_head, h_dim // depth) # TODO check on the paper the explenation (appendix C)
+        self.num_heads = max(minimum_head, h_dim // depth)
         self.w_dim = w_dim
         self.out_dim = out_dim
         self.seq_length = seq_length
@@ -323,12 +327,12 @@ class Encoderlayer(nn.Module):
         self.compute_qkv_weights(h_dim, memory_format)
 
         self.w_weight = torch.nn.Parameter(
-            torch.FloatTensor(out_dim, h_dim).uniform_(-1. / math.sqrt(h_dim), 1. / math.sqrt(h_dim)).to(memory_format=memory_format)) # TODO what is w_weight? check on paper.
+            torch.FloatTensor(out_dim, h_dim).uniform_(-1. / math.sqrt(h_dim), 1. / math.sqrt(h_dim)).to(memory_format=memory_format)) 
 
         self.proj_weight = proj_weight # due to linformer
 
         self.u_weight = torch.nn.Parameter(
-            torch.FloatTensor(out_dim, h_dim).uniform_(-1. / math.sqrt(h_dim), 1. / math.sqrt(h_dim)).to(memory_format=memory_format)) # TODO what is u_weight? check on paper.
+            torch.FloatTensor(out_dim, h_dim).uniform_(-1. / math.sqrt(h_dim), 1. / math.sqrt(h_dim)).to(memory_format=memory_format))
 
         if use_noise:
             self.register_buffer('noise_const', torch.randn([self.seq_length, 1]))
@@ -536,10 +540,14 @@ class SynthesisNetwork(nn.Module):
         self.img_resolution_log2 = int(np.log2(img_resolution))
         self.img_channels = img_channels
         self.block_resolutions = [2 ** i for i in range(3, self.img_resolution_log2 + 1)] 
+        self.num_layers = num_layers
         # Every block has a resolution until we reach img resolution
         # i.e. [8, 16, 32] 
+        print(f'Expected BlockResolution: {self.block_resolutions}')
+        print(f'Defined layers: {num_layers}')
         assert len(self.block_resolutions) == len(num_layers)
-        channels_dict = dict(zip(*[self.block_resolutions, G_dict])) # i.e. g_dict of img_res = 32 and {8: 256, 16: 64, 32: 16}
+    
+        channels_dict = dict(zip(*[self.block_resolutions, G_dict])) # i.e. g_dict of img_res = 32 and {8: 256, 16: 64, 32: 16, 64: 8, 128: 4, 256: 2} 256,64,16,8,4,2
         fp16_resolution = max(2 ** (self.img_resolution_log2 + 1 - num_fp16_res), 8)
 
         # num_ws is the total w used in the syntesys network
@@ -552,9 +560,7 @@ class SynthesisNetwork(nn.Module):
             out_dim = None
             if res != self.img_resolution:
                 out_dim = channels_dict[res * 2]  # The output dimension of the block
-                # TODO TOGLI QUESTO COMMENTO
-                # channel_dict = {8: 256, 16: 64, 32: 16} quindi essenzialmente se non sei arrivato alla risoluzione giusta
-                # vai al prossimo valore di G_DICT 
+                # channel_dict = {8: 256, 16: 64, 32: 16}
                 # i.e. res = 8 < img res => out_dim = channel_dict[16] => 64
             use_fp16 = (res >= fp16_resolution)
             num_layers_block = num_layers[i] # Num layers for block i
@@ -580,7 +586,7 @@ class SynthesisNetwork(nn.Module):
             ws = ws.to(torch.float32)
             w_idx = 0
             for i, res in enumerate(self.block_resolutions):
-                num_block_res = self.num_block[i]
+                num_block_res = self.num_layers[i]
                 res_ws = []
                 for j in range(num_block_res):
                     block = getattr(self, f'b{res}_{j}')
@@ -590,7 +596,7 @@ class SynthesisNetwork(nn.Module):
 
         x = img = None
         for i, (res, cur_ws) in enumerate(zip(self.block_resolutions, block_ws)):
-            num_block_res = self.num_block[i]
+            num_block_res = self.num_layers[i]
             for j in range(num_block_res):
                 block = getattr(self, f'b{res}_{j}')
                 x, img = block(x, img, cur_ws[j])
