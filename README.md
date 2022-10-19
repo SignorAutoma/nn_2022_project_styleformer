@@ -28,13 +28,15 @@ However, Transformer presents also some drawbacks, indeed, for higher dimension 
 
 **How Styleformer works?**
 
-![Styleformer architecture](/docs/architecture.png)
+![Styleformer architecture](/docs/images/architecture.jpg)
 
 Styleformer generator is conditioned on a learnable constant input and combined with a learnable positional encoding (as seen in the Transformer model **[3]**) which is a scheme throguh which the knowledge about the order of a input is mantained.
 The constant input (8x8) is flattened (64) to enter the Transformer-based encoder, then the input passes through the Styleformer encoder. Each resolution passes through several encoder blocks and eventually we proceed with a bilinear upsample operation by reshaping encoder output to the form of square feature map. After upsampling, flatten process is carried out again to match the input form of the Styleformer encoder, followed by adding positional encoding in the form of a learned parameter. This process will repeat until the feature map resolution reaches the target image resolution.
 For each resolution, the number of the Styleformer encoder and hidden dimension size can be chosen as hyperparameters, each for these parameters, can change for each resolution.
 
 Let's see in the details what happen in the encoder blocks:
+
+![Modified enchoder architecture](/docs/images/encoder.jpg)
 
 StyleGAN generates an image by receiving different inputs in the form of style vectors, and similar to it, we need different style vector for each module, therefore for each operation, to learn effectively.
 As said before, we need a Transformer-based generator that generates images applying a style vector, for this reason we need a style modulation and demodulation methods, in which we apply style vector to achieve the self-attention operation.
