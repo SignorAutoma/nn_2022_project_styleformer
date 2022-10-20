@@ -64,7 +64,7 @@ For the metrics to evaluate our implementation we have choosen the **Frechet Inc
 this is widely used as a benchmark dataset. They used 50K images(32x32) at the training set, without using label.
 With the pre-trained pickle Styleformer records FID 2.82, and IS 9.94, which is comparable with current state-of-the-art. 
 
-With our implementation after 50 minutes of training with Colab, Styleformer recorded FID 95.49, and IS xx.xx.
+With our implementation after 50 minutes of training with Colab, Styleformer recorded FID 98.49, and IS 5.23.
 With Styleformer code from [1] after 50 minutes of training with Colab, recorded FID 86.63 and IS 4.66.
 We are aware that the training in this small amount of time is not a complete information, but is significative to show the goodness of the implementation. 
 Actually we are working to train the network for an higher amount of time and eventually with more hardware resources to have a more accurate estimation of performances.
