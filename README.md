@@ -5,7 +5,7 @@
 
 # Styleformer
 ### Implementation of a style image generator, convolution-free and based on Transformer model.
-<a href="https://colab.research.google.com/drive/1exy4kS-OdsHHA_yY9dzOjQCzAkz--6q6?authuser=4#scrollTo=V5Xado9PNS74" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
+<a href="https://colab.research.google.com/drive/1exy4kS-OdsHHA_yY9dzOjQCzAkz--6q6?authuser=4" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
 <a href="./docs/slides.pdf" target="_parent"><img src="https://img.shields.io/badge/Slides-PowerPoint-orange" alt="Open In Colab"/></a>
 
 
@@ -64,8 +64,8 @@ For the metrics to evaluate our implementation we have choosen the **Frechet Inc
 this is widely used as a benchmark dataset. They used 50K images(32x32) at the training set, without using label.
 With the pre-trained pickle Styleformer records FID 2.82, and IS 9.94, which is comparable with current state-of-the-art. 
 
-With our implementation after 50 minutes of training with Colab, Styleformer recorded FID 95.49, and IS xx.xx.
-With Styleformer code from [1] after 50 minutes of training with Colab, recorded FID 69.07 and IS 4.66.
+With our implementation after 50 minutes of training with Colab, Styleformer recorded FID 105.49 and IS 5.23.
+With Styleformer code from [1] after 50 minutes of training with Colab, recorded FID 86.63 and IS 4.66.
 We are aware that the training in this small amount of time is not a complete information, but is significative to show the goodness of the implementation. 
 Actually we are working to train the network for an higher amount of time and eventually with more hardware resources to have a more accurate estimation of performances.
 
