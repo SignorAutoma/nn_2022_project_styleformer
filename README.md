@@ -149,7 +149,7 @@ The output should be like the image above
 ## Some samples generated with our Colab
 ![Colab Image sample](docs/sample_image.png)
 
-![Colab Video sample](docs/sample_video.mp4)
+![Colab Video sample](docs/sample_gif.mp4)
 
 ![Colab Finetune sample](docs/sample_fine_tune.png)
 
