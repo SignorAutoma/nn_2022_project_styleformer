@@ -147,11 +147,11 @@ The output should be like the image above
 ![Generate some random image](https://i.ibb.co/8jzqLtW/image.png)
 
 ## Some samples generated with our Colab
-![Colab Image sample](docs/sample_img1.png)
+![Colab Image sample](docs/sample_image.png)
 
-![Colab Video sample](docs/sample_video1.mp4)
+![Colab Video sample](docs/sample_video.mp4)
 
-![Colab Finetune sample](docs/sample_finetune1.png)
+![Colab Finetune sample](docs/sample_fine_tune.png)
 
 ## Authors
 * ##### [Fabio Caputo](https://it.linkedin.com/in/fabio-caputo-41163b171)
